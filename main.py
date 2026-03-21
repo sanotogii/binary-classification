@@ -34,17 +34,22 @@ def load_dataset(path: Path, img_size: int, batch_size: int, shuffle: bool):
     ).ignore_errors().prefetch(tf.data.AUTOTUNE)
 
 
-def build_model(img_size: int) -> models.Sequential:
-    return models.Sequential([
-        layers.Rescaling(1./255, input_shape=(img_size, img_size, 3)),
-        layers.Conv2D(32, 3, activation='relu'),
-        layers.MaxPooling2D(),
-        layers.Conv2D(64, 3, activation='relu'),
-        layers.MaxPooling2D(),
-        layers.Flatten(),
-        layers.Dense(64, activation='relu'),
-        layers.Dense(1, activation='sigmoid')
-    ])
+def build_model(img_size: int) -> tf.keras.Model:
+    base = tf.keras.applications.MobileNetV2(
+        input_shape=(img_size, img_size, 3),
+        include_top=False,
+        weights="imagenet",
+    )
+    base.trainable = False  # freeze pretrained weights
+
+    inputs = tf.keras.Input(shape=(img_size, img_size, 3))
+    # MobileNetV2 expects pixels in [-1, 1]
+    x = tf.keras.applications.mobilenet_v2.preprocess_input(inputs)
+    x = base(x, training=False)
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dropout(0.2)(x)
+    outputs = layers.Dense(1, activation="sigmoid")(x)
+    return tf.keras.Model(inputs, outputs)
 
 
 def evaluate_metrics(model: tf.keras.Model, dataset: tf.data.Dataset) -> dict:

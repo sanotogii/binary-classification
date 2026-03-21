@@ -1,0 +1,660 @@
+\documentclass[12pt,a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+
+% ── Colors & Styles ───────────────────────────────────────────
+\definecolor{codeblue}{HTML}{1a73e8}
+\definecolor{codegray}{HTML}{6c757d}
+\definecolor{codebg}{HTML}{f8f9fa}
+\definecolor{darkgreen}{HTML}{28a745}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=codeblue,
+    urlcolor=codeblue,
+    citecolor=codeblue,
+}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codegray},
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegray},
+    stringstyle=\color{darkgreen},
+    showstringspaces=false,
+    tabsize=4,
+}
+
+% ── Header/Footer ─────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Binary Classification of Algae}
+\fancyhead[R]{\small University Project}
+\fancyfoot[C]{\thepage}
+
+% ══════════════════════════════════════════════════════════════
+%                        DOCUMENT
+% ══════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Title Page ────────────────────────────────────────────────
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries Binary Image Classification\\of Marine Algae\\[0.5cm]}
+    {\LARGE Using Transfer Learning with MobileNetV2\\[1.5cm]}
+    {\Large\itshape Classifying \textbf{Alma} and \textbf{Glaci} Algae Species\\from Beach Photographs in Agadir, Morocco\\[2cm]}
+    {\large University Project\\[0.5cm]}
+    {\large\today\\[3cm]}
+    \vfill
+    {\normalsize Built with TensorFlow, Keras \& Streamlit}
+\end{titlepage}
+
+% ── Table of Contents ─────────────────────────────────────────
+\newpage
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════
+\section{Introduction}
+% ══════════════════════════════════════════════════════════════
+
+This project implements an end-to-end \textbf{binary image classification} system that distinguishes between two types of marine algae---\textbf{Alma} and \textbf{Glaci}---found on the beaches of Agadir, Morocco. The system leverages \textbf{transfer learning} with the MobileNetV2 architecture pre-trained on ImageNet, combined with a custom classification head trained on our algae dataset. A Streamlit web application provides a user-friendly interface for real-time inference.
+
+\subsection{Objectives}
+
+\begin{enumerate}
+    \item Collect and curate a photographic dataset of two algae types from Agadir beaches.
+    \item Build an accurate deep learning classifier using transfer learning.
+    \item Deploy the model through an interactive web interface.
+    \item Document the biological context and technical methodology.
+\end{enumerate}
+
+\subsection{Key Technologies}
+
+\begin{itemize}
+    \item \textbf{TensorFlow / Keras} --- Deep learning framework
+    \item \textbf{MobileNetV2} --- Pre-trained backbone (ImageNet weights)
+    \item \textbf{Streamlit} --- Web-based inference UI
+    \item \textbf{scikit-learn} --- Evaluation metrics
+    \item \textbf{Matplotlib} --- Learning curve visualization
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════
+\section{Biological Context}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Marine Algae Overview}
+
+Marine algae (seaweeds) are photosynthetic organisms found in coastal and oceanic environments worldwide. They play a critical role in marine ecosystems by:
+
+\begin{itemize}
+    \item \textbf{Producing oxygen} --- Marine algae contribute an estimated 50\% of the world's oxygen through photosynthesis.
+    \item \textbf{Carbon fixation} --- They absorb CO\textsubscript{2} from the atmosphere, acting as a carbon sink.
+    \item \textbf{Habitat creation} --- Algae beds provide shelter, breeding grounds, and food for marine fauna.
+    \item \textbf{Nutrient cycling} --- They recycle nutrients within marine food webs.
+    \item \textbf{Economic value} --- Algae are used in food, cosmetics, pharmaceuticals, fertilizers, and biofuels.
+\end{itemize}
+
+Marine algae are broadly classified into three major groups based on their pigmentation:
+
+\begin{table}[H]
+    \centering
+    \caption{Major groups of marine algae}
+    \begin{tabular}{@{}llll@{}}
+        \toprule
+        \textbf{Group} & \textbf{Common Name} & \textbf{Primary Pigments} & \textbf{Example Genera} \\
+        \midrule
+        Chlorophyta  & Green algae  & Chlorophyll a, b      & \textit{Ulva}, \textit{Codium} \\
+        Phaeophyta   & Brown algae  & Fucoxanthin           & \textit{Fucus}, \textit{Sargassum} \\
+        Rhodophyta   & Red algae    & Phycoerythrin         & \textit{Gracilaria}, \textit{Gelidium} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Algae in Agadir, Morocco}
+
+Agadir is a coastal city in southwestern Morocco, situated along the Atlantic Ocean. The Agadir coastline is characterized by:
+
+\begin{itemize}
+    \item A long sandy beach stretching over 10 km
+    \item Temperate to warm Atlantic waters influenced by the Canary Current
+    \item Rocky intertidal zones rich in biodiversity
+    \item Seasonal upwelling that brings nutrient-rich deep water to the surface, promoting algal growth
+\end{itemize}
+
+The Moroccan Atlantic coast is known for its diverse marine flora. The region of Souss-Massa (where Agadir is located) hosts numerous species of macroalgae. Algae are commonly found attached to rocks in the intertidal zone or washed ashore on beaches.
+
+\subsection{The Two Study Species}
+
+This project focuses on two types of algae collected from the beaches of Agadir:
+
+\subsubsection{Alma}
+
+\textbf{Alma} refers to a type of algae commonly encountered on the Agadir shoreline. In the local context, ``alma'' is a vernacular name used to describe certain species of edible or commonly recognized seaweed. Key characteristics:
+
+\begin{itemize}
+    \item Found in the intertidal and subtidal zones of rocky shores
+    \item Typically exhibits distinctive coloration and morphological features
+    \item Can be distinguished visually from other algae types by its shape, texture, and color
+    \item 300 photographs were collected for this class
+\end{itemize}
+
+\subsubsection{Glaci}
+
+\textbf{Glaci} represents the second type of algae studied in this project. Key characteristics:
+
+\begin{itemize}
+    \item Also found along the Agadir coastline
+    \item Exhibits different visual characteristics compared to Alma
+    \item Distinct morphology (shape, branching pattern, texture, and/or coloration)
+    \item 375 photographs were collected for this class
+\end{itemize}
+
+\subsection{Why Classify Algae Automatically?}
+
+Accurate identification of algae species is important for:
+
+\begin{enumerate}
+    \item \textbf{Ecological monitoring} --- Tracking species distribution and abundance over time helps detect environmental changes.
+    \item \textbf{Biodiversity assessment} --- Cataloguing algal diversity in Moroccan coastal waters.
+    \item \textbf{Water quality indication} --- Certain algae thrive in polluted or nutrient-enriched waters; their presence can indicate water quality.
+    \item \textbf{Commercial applications} --- Identifying commercially valuable species used for agar extraction, food, cosmetics, or biofuels.
+    \item \textbf{Research acceleration} --- Automating identification frees researchers from tedious manual sorting.
+\end{enumerate}
+
+Traditional algae identification requires trained marine biologists who examine morphological features under magnification. This process is:
+\begin{itemize}
+    \item Time-consuming
+    \item Dependent on expert availability
+    \item Subject to inter-observer variability
+\end{itemize}
+
+An automated deep learning classifier addresses all of these limitations.
+
+% ══════════════════════════════════════════════════════════════
+\section{Dataset}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Data Collection}
+
+Photographs were captured directly on the beaches of Agadir, Morocco using a standard camera. The images are natural photographs taken in real-world conditions (variable lighting, backgrounds, angles).
+
+\subsection{Raw Data}
+
+\begin{table}[H]
+    \centering
+    \caption{Raw dataset composition}
+    \begin{tabular}{@{}lrl@{}}
+        \toprule
+        \textbf{Class} & \textbf{Images} & \textbf{Format} \\
+        \midrule
+        Alma    & 300 & JPG \\
+        Glaci   & 375 & JPG \\
+        \midrule
+        \textbf{Total} & \textbf{675} & \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The raw data contains duplicate images (files with ``Copie'' in the filename). After deduplication, approximately \textbf{269 unique images} remain.
+
+\subsection{Data Split}
+
+The unique images were divided into three non-overlapping subsets:
+
+\begin{table}[H]
+    \centering
+    \caption{Train / Validation / Test split}
+    \begin{tabular}{@{}lrrrl@{}}
+        \toprule
+        \textbf{Split} & \textbf{Alma} & \textbf{Glaci} & \textbf{Total} & \textbf{Purpose} \\
+        \midrule
+        Train      & 105 & 92 & 197 & Weight optimization \\
+        Validation & 19  & 17 & 36  & Hyperparameter monitoring \\
+        Test       & 19  & 17 & 36  & Final unbiased evaluation \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Preprocessing Pipeline}
+
+At load time, each image undergoes:
+
+\begin{enumerate}
+    \item \textbf{Resizing} --- All images resized to $96 \times 96$ pixels.
+    \item \textbf{Batching} --- Grouped into mini-batches of 32 images.
+    \item \textbf{Normalization} --- Pixel values scaled from $[0, 255]$ to $[-1, 1]$ via MobileNetV2 preprocessing.
+    \item \textbf{Prefetching} --- \texttt{tf.data.AUTOTUNE} overlaps loading with training.
+    \item \textbf{Error handling} --- Corrupted files are skipped via \texttt{.ignore\_errors()}.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════
+\section{Model Architecture}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Transfer Learning Approach}
+
+Training a convolutional neural network from scratch requires large datasets (typically tens of thousands of images). With only $\sim$270 unique images, we employ \textbf{transfer learning}: reusing a model pre-trained on ImageNet (1.2 million images, 1000 classes) and adapting it to our binary algae classification task.
+
+\subsection{Architecture Overview}
+
+The model consists of two parts:
+
+\begin{enumerate}
+    \item \textbf{Feature Extractor (Frozen)} --- MobileNetV2 backbone with ImageNet weights.
+    \item \textbf{Classification Head (Trainable)} --- Custom layers for binary output.
+\end{enumerate}
+
+\begin{table}[H]
+    \centering
+    \caption{Model architecture layer by layer}
+    \begin{tabular}{@{}llll@{}}
+        \toprule
+        \textbf{Layer} & \textbf{Output Shape} & \textbf{Parameters} & \textbf{Trainable} \\
+        \midrule
+        Input                   & $(96, 96, 3)$         & 0         & --- \\
+        MobileNetV2 Preprocess  & $(96, 96, 3)$         & 0         & --- \\
+        MobileNetV2 Backbone    & $(3, 3, 1280)$        & $\sim$2.2M & \textbf{No} (frozen) \\
+        Global Average Pooling  & $(1280)$              & 0         & --- \\
+        Dropout (0.2)           & $(1280)$              & 0         & --- \\
+        Dense (sigmoid)         & $(1)$                 & 1,281     & \textbf{Yes} \\
+        \midrule
+        \multicolumn{2}{@{}l}{\textbf{Total trainable parameters}} & \textbf{1,281} & \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Why MobileNetV2?}
+
+MobileNetV2 was chosen for the following reasons:
+
+\begin{itemize}
+    \item \textbf{Lightweight} --- Only $\sim$3.4M parameters total, enabling fast inference.
+    \item \textbf{Pre-trained on ImageNet} --- Rich visual feature representations.
+    \item \textbf{Depthwise separable convolutions} --- Efficient computation.
+    \item \textbf{Inverted residual blocks} --- Better gradient flow during training.
+    \item \textbf{Flexible input sizes} --- Works well at $96 \times 96$.
+\end{itemize}
+
+\begin{table}[H]
+    \centering
+    \caption{Comparison with other backbone architectures}
+    \begin{tabular}{@{}lrl@{}}
+        \toprule
+        \textbf{Model} & \textbf{Parameters} & \textbf{Inference Speed} \\
+        \midrule
+        \textbf{MobileNetV2} & \textbf{3.4M} & \textbf{Fast} \\
+        ResNet-50     & 25.6M  & Medium \\
+        VGG-16        & 138M   & Slow \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Layer Details}
+
+\subsubsection{MobileNetV2 Preprocessing}
+
+MobileNetV2 expects input pixels in the range $[-1, 1]$. The built-in preprocessing function applies:
+
+$$x_{\text{normalized}} = \frac{x}{127.5} - 1$$
+
+\subsubsection{MobileNetV2 Backbone (Frozen)}
+
+\begin{itemize}
+    \item Pre-trained on ImageNet (1.2M images, 1000 classes).
+    \item \texttt{include\_top=False} removes the original 1000-class head.
+    \item \texttt{base.trainable = False} freezes all backbone weights.
+    \item Acts as a \textbf{fixed feature extractor}.
+    \item Outputs a 3D feature map of shape $(3, 3, 1280)$ for $96 \times 96$ input.
+\end{itemize}
+
+\subsubsection{Global Average Pooling 2D}
+
+Reduces the spatial dimensions by averaging over the $3 \times 3$ spatial grid:
+
+$$\text{GAP}(F)_c = \frac{1}{H \times W} \sum_{i=1}^{H} \sum_{j=1}^{W} F_{i,j,c}$$
+
+This produces a 1280-dimensional feature vector.
+
+\subsubsection{Dropout (rate = 0.2)}
+
+During training, randomly sets 20\% of activations to zero. This regularization technique helps prevent overfitting, which is especially important with our small dataset.
+
+\subsubsection{Dense Layer (1 unit, Sigmoid)}
+
+The final layer outputs a single value passed through the sigmoid function:
+
+$$\sigma(z) = \frac{1}{1 + e^{-z}}$$
+
+The output $p \in [0, 1]$ represents the probability of the input belonging to class ``glaci'':
+\begin{itemize}
+    \item $p \geq 0.5 \Rightarrow$ \textbf{Glaci}
+    \item $p < 0.5 \Rightarrow$ \textbf{Alma}
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════
+\section{Training Pipeline}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Training Configuration}
+
+\begin{table}[H]
+    \centering
+    \caption{Configurable training parameters}
+    \begin{tabular}{@{}lll@{}}
+        \toprule
+        \textbf{Parameter} & \textbf{Default} & \textbf{CLI Flag} \\
+        \midrule
+        Data directory  & \texttt{data\_split}                    & \texttt{--data-dir} \\
+        Image size      & $96 \times 96$                          & \texttt{--img-size} \\
+        Batch size      & 32                                      & \texttt{--batch-size} \\
+        Epochs          & 10                                      & \texttt{--epochs} \\
+        Model output    & \texttt{artifacts/2-epoches-test.keras} & \texttt{--model-out} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Compilation Settings}
+
+\begin{table}[H]
+    \centering
+    \caption{Model compilation configuration}
+    \begin{tabular}{@{}lll@{}}
+        \toprule
+        \textbf{Setting} & \textbf{Value} & \textbf{Rationale} \\
+        \midrule
+        Optimizer & Adam                & Adaptive learning rate \\
+        Loss      & Binary Crossentropy & Standard for binary classification \\
+        Metric    & Accuracy            & Intuitive training monitor \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Loss Function}
+
+Binary crossentropy is defined as:
+
+$$\mathcal{L} = -\frac{1}{N}\sum_{i=1}^{N}\left[y_i \log(\hat{y}_i) + (1-y_i)\log(1-\hat{y}_i)\right]$$
+
+where $y_i \in \{0, 1\}$ is the true label and $\hat{y}_i$ is the predicted probability.
+
+\subsection{Training Workflow}
+
+The complete training pipeline (\texttt{main.py}) executes the following steps:
+
+\begin{enumerate}
+    \item Parse command-line arguments
+    \item Load train / validation / test datasets from \texttt{data\_split/}
+    \item Build MobileNetV2 model with custom classification head
+    \item Compile with Adam optimizer and binary crossentropy loss
+    \item Train the model, monitoring validation performance each epoch
+    \item Save the trained model to \texttt{artifacts/*.keras}
+    \item Plot and save learning curves (loss and accuracy)
+    \item Evaluate on train / validation / test sets
+    \item Save metrics to \texttt{artifacts/metrics.json}
+    \item Save metadata (class names, image size) to \texttt{artifacts/meta.json}
+    \item Automatically update \texttt{README.md} with latest test metrics
+\end{enumerate}
+
+\subsection{Artifacts Produced}
+
+\begin{table}[H]
+    \centering
+    \caption{Files generated after training}
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{File} & \textbf{Description} \\
+        \midrule
+        \texttt{2-epoches-test.keras} & Serialized trained Keras model \\
+        \texttt{meta.json}            & Class names and image size \\
+        \texttt{metrics.json}         & All evaluation metrics \\
+        \texttt{learning\_curves.png} & Loss \& accuracy plots \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% ══════════════════════════════════════════════════════════════
+\section{Evaluation \& Results}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Metrics}
+
+Four standard classification metrics are computed:
+
+\begin{align}
+    \text{Accuracy}  &= \frac{TP + TN}{TP + TN + FP + FN} \\[6pt]
+    \text{Precision} &= \frac{TP}{TP + FP} \\[6pt]
+    \text{Recall}    &= \frac{TP}{TP + FN} \\[6pt]
+    \text{F1-Score}  &= 2 \cdot \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
+\end{align}
+
+\subsection{Results}
+
+\begin{table}[H]
+    \centering
+    \caption{Model performance across all data splits}
+    \begin{tabular}{@{}lrrrr@{}}
+        \toprule
+        \textbf{Split} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} \\
+        \midrule
+        Train      & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        Validation & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        Test       & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Analysis}
+
+The model achieves \textbf{perfect classification} (100\%) across all splits. This indicates:
+
+\begin{itemize}
+    \item The two algae types are \textbf{visually very distinct}---the morphological and color differences between Alma and Glaci are clear enough for the model to learn a perfect decision boundary.
+    \item Transfer learning features from ImageNet generalize well to marine biological imagery.
+    \item There are \textbf{no signs of overfitting} (train performance = validation performance = test performance).
+    \item The frozen MobileNetV2 features are more than sufficient for this task.
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════
+\section{Inference Application}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Streamlit Web App}
+
+The project includes an interactive web application built with Streamlit (\texttt{app.py}) for real-time inference.
+
+\subsection{Features}
+
+\begin{itemize}
+    \item Upload any JPG/PNG image
+    \item Instant classification result with confidence percentage
+    \item Raw probability distribution for both classes
+    \item Display of latest training metrics
+    \item Model caching for fast repeated predictions
+\end{itemize}
+
+\subsection{Inference Pipeline}
+
+\begin{enumerate}
+    \item User uploads an image through the web interface.
+    \item Image is converted to RGB (if necessary).
+    \item Image is resized to $96 \times 96$ pixels.
+    \item Image is converted to a NumPy array with batch dimension: shape $(1, 96, 96, 3)$.
+    \item Model performs a forward pass (MobileNetV2 preprocessing applied internally).
+    \item Sigmoid output $p$ is thresholded at 0.5 to determine the predicted class.
+    \item The class label and confidence ($\max(p, 1-p)$) are displayed.
+\end{enumerate}
+
+\subsection{Running the App}
+
+\begin{lstlisting}[language=bash]
+streamlit run app.py
+\end{lstlisting}
+
+Then open \texttt{http://localhost:8501} in a browser.
+
+% ══════════════════════════════════════════════════════════════
+\section{Project Structure}
+% ══════════════════════════════════════════════════════════════
+
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
+binary-classification/
+|-- main.py                   # Training script
+|-- app.py                    # Streamlit inference app
+|-- requirements.txt          # Python dependencies
+|-- README.md                 # Project readme
+|-- data/                     # Raw images
+|   |-- alma/                 # 300 JPGs
+|   |-- glaci/                # 375 JPGs
+|-- data_split/               # Train/Val/Test
+|   |-- train/
+|   |   |-- alma/   (105)
+|   |   |-- glaci/  (92)
+|   |-- val/
+|   |   |-- alma/   (19)
+|   |   |-- glaci/  (17)
+|   |-- test/
+|       |-- alma/   (19)
+|       |-- glaci/  (17)
+|-- artifacts/                # Training outputs
+    |-- 2-epoches-test.keras
+    |-- meta.json
+    |-- metrics.json
+    |-- learning_curves.png
+\end{lstlisting}
+
+% ══════════════════════════════════════════════════════════════
+\section{Reproduction Guide}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Prerequisites}
+
+\begin{itemize}
+    \item Python 3.8+
+    \item pip package manager
+\end{itemize}
+
+\subsection{Step 1: Install Dependencies}
+
+\begin{lstlisting}[language=bash]
+pip install -r requirements.txt
+\end{lstlisting}
+
+Dependencies: \texttt{tensorflow-cpu}, \texttt{pillow}, \texttt{streamlit}, \texttt{scikit-learn}.
+
+\subsection{Step 2: Prepare Data}
+
+Place algae photographs into the class folders:
+
+\begin{lstlisting}[language=bash]
+data/alma/    # Alma algae images
+data/glaci/   # Glaci algae images
+\end{lstlisting}
+
+Then split into \texttt{data\_split/train}, \texttt{data\_split/val}, and \texttt{data\_split/test}.
+
+\subsection{Step 3: Train}
+
+\begin{lstlisting}[language=bash]
+python main.py
+# Or with custom parameters:
+python main.py --epochs 20 --img-size 128 --batch-size 16
+\end{lstlisting}
+
+\subsection{Step 4: Run Inference}
+
+\begin{lstlisting}[language=bash]
+streamlit run app.py
+\end{lstlisting}
+
+% ══════════════════════════════════════════════════════════════
+\section{Design Decisions}
+% ══════════════════════════════════════════════════════════════
+
+\begin{table}[H]
+    \centering
+    \caption{Key technical decisions and their rationale}
+    \begin{tabular}{@{}p{4cm}p{8cm}@{}}
+        \toprule
+        \textbf{Decision} & \textbf{Rationale} \\
+        \midrule
+        Transfer learning over training from scratch & Only $\sim$270 unique images; training from scratch would severely overfit. ImageNet features generalize well as generic visual representations. \\
+        \addlinespace
+        Frozen backbone & Small dataset means fine-tuning all layers risks overfitting. Freezing the backbone limits trainable parameters to $\sim$1,281. \\
+        \addlinespace
+        $96 \times 96$ input size & Faster training/inference with lower memory. Sufficient for visually distinct classes. \\
+        \addlinespace
+        Sigmoid + Binary Crossentropy & Single output neuron is more efficient than 2-class softmax for binary tasks. \\
+        \addlinespace
+        Adam optimizer & Adaptive learning rate; works well out of the box without tuning. \\
+        \addlinespace
+        MobileNetV2 & Best trade-off between parameter count and feature quality for lightweight deployment. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% ══════════════════════════════════════════════════════════════
+\section{Potential Improvements}
+% ══════════════════════════════════════════════════════════════
+
+\begin{table}[H]
+    \centering
+    \caption{Possible future improvements}
+    \begin{tabular}{@{}p{4.5cm}p{6.5cm}l@{}}
+        \toprule
+        \textbf{Improvement} & \textbf{Expected Benefit} & \textbf{Effort} \\
+        \midrule
+        Data Augmentation        & More robust to lighting/angle variations & Low \\
+        Fine-Tuning Top Layers   & Better domain-specific features          & Low \\
+        Larger Image Size        & Capture finer morphological details      & Low \\
+        Early Stopping           & Prevent overfitting, save time           & Low \\
+        Learning Rate Scheduling & Better convergence                       & Medium \\
+        Grad-CAM Visualization   & Explainability---see what the model focuses on & Medium \\
+        Multi-class Extension    & Classify more algae species              & Medium \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% ══════════════════════════════════════════════════════════════
+\section{Conclusion}
+% ══════════════════════════════════════════════════════════════
+
+This project demonstrates that \textbf{transfer learning with MobileNetV2} is a highly effective approach for binary classification of marine algae, even with a very small dataset ($\sim$270 images). By reusing features learned from ImageNet and training only a lightweight classification head (1,281 parameters), we achieved \textbf{100\% accuracy} across all evaluation splits.
+
+The combination of:
+\begin{itemize}
+    \item A pre-trained backbone for feature extraction
+    \item A simple classification head
+    \item A Streamlit web interface for deployment
+\end{itemize}
+
+\noindent makes this system practical, efficient, and accessible. The approach can be readily extended to classify additional algae species or applied to other biological image classification tasks.
+
+\vspace{1cm}
+\noindent\rule{\textwidth}{0.4pt}
+\begin{center}
+    \textit{End of Documentation}
+\end{center}
+
+\end{document}
