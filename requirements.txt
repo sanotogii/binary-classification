@@ -1,5 +1,5 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
-pillow
-streamlit
-tensorflow-cpu
-scikit-learn
+pillow==10.1.0
+streamlit==1.28.1
+tensorflow-cpu==2.16.1
+scikit-learn==1.3.2
