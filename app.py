@@ -7,7 +7,7 @@ from PIL import Image
 import tensorflow as tf
 
 ARTIFACTS_DIR = Path("artifacts")
-MODEL_PATH = ARTIFACTS_DIR / "2-epoches-test.keras"
+MODEL_PATH = ARTIFACTS_DIR / "algae.keras"
 META_PATH = ARTIFACTS_DIR / "meta.json"
 METRICS_PATH = ARTIFACTS_DIR / "metrics.json"
 
@@ -379,7 +379,7 @@ def render_probability_bars(class_names, score):
 
 def main():
     st.set_page_config(
-        page_title="Binary Classifier",
+        page_title="Sargassum and Gracilaria Classifier",
         page_icon=None,
         layout="wide",
         initial_sidebar_state="collapsed"
@@ -390,7 +390,7 @@ def main():
     st.markdown("""
         <div class="masthead">
             <div class="masthead-kicker">Machine Learning / Classification System</div>
-            <div class="masthead-title">Neural Classifier</div>
+            <div class="masthead-title">Sargassum and Gracilaria classifier</div>
             <div class="masthead-sub">Binary Classification &nbsp;&mdash;&nbsp; Confidence Scoring &nbsp;&mdash;&nbsp; TensorFlow</div>
         </div>
     """, unsafe_allow_html=True)
