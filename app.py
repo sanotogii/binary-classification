@@ -468,8 +468,8 @@ def main():
             st.markdown(f"""
                 <div class="score-block">
                     <div class="score-tag">Confidence score</div>
-                    <div class="score-value">{score*100:.2f}%</div>
-                    <div class="score-note">Sigmoid output &nbsp; [0, 1]</div>
+                    <div class="score-value">{confidence*100:.2f}%</div>
+                    <div class="score-note">for {predicted_class}</div>
                 </div>
             """, unsafe_allow_html=True)
 

@@ -18,7 +18,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--img-size", type=int, default=96)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--model-out", default="artifacts/2-epoches-test.keras")
+    parser.add_argument(
+        "--early-stopping-patience",
+        type=int,
+        default=3,
+        help="Number of epochs with no improvement before stopping",
+    )
+    parser.add_argument(
+        "--early-stopping-min-delta",
+        type=float,
+        default=0.0,
+        help="Minimum change in monitored metric to qualify as an improvement",
+    )
+    parser.add_argument("--model-out", default="artifacts/algae.keras")
     return parser.parse_args()
 
 
@@ -160,11 +172,23 @@ def main() -> None:
     model = build_model(args.img_size)
     model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
 
+    monitor_metric = "val_loss" if val_ds is not None else "loss"
+    callbacks = [
+        tf.keras.callbacks.EarlyStopping(
+            monitor=monitor_metric,
+            patience=args.early_stopping_patience,
+            min_delta=args.early_stopping_min_delta,
+            restore_best_weights=True,
+            verbose=1,
+        )
+    ]
+
     print("Starting training...")
     history = model.fit(
         train_ds, 
         validation_data=val_ds, 
-        epochs=args.epochs
+        epochs=args.epochs,
+        callbacks=callbacks,
     )
 
     artifacts_dir = Path("artifacts")
